@@ -6,7 +6,7 @@ A modern, mobile-friendly attendance tracking system using QR codes. Teachers ca
 
 - **QR Code Generation**: Teachers can instantly generate QR codes for each lecture
 - **Mobile QR Scanning**: Students use their mobile devices to scan QR codes and mark attendance
-- **Session-Based Authentication**: Secure login with session cookies stored in Firebase
+- **Session-Based Authentication**: Secure login with session cookies stored in MongoDB
 - **Real-time Attendance Tracking**: See attendance records updated in real-time
 - **Activity History**: Students can view their attendance history and absence alerts
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices

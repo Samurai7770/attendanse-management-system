@@ -19,7 +19,7 @@ const markAttendance = async (req, res) => {
 
     // Check if attendance already marked
     const existingAttendance = await Attendance.findOne({
-      lectureId: lecture.id,
+      lectureId: lecture._id,
       studentId
     });
 
@@ -28,34 +28,38 @@ const markAttendance = async (req, res) => {
     }
 
     // Create attendance record
-    const attendance = Attendance.create({
-      lectureId: lecture.id,
+    const attendance = new Attendance({
+      lectureId: lecture._id,
       studentId,
       studentName
     });
 
     await attendance.save();
     res.status(201).json({ message: 'Attendance marked successfully', attendance: {
-      id: attendance.id,
-      lectureId: attendance.lectureId,
-      studentId: attendance.studentId,
+      id: attendance._id.toString(),
+      lectureId: attendance.lectureId.toString(),
+      studentId: attendance.studentId.toString(),
       studentName: attendance.studentName,
       timestamp: attendance.timestamp
     } });
   } catch (error) {
     console.error('Error in markAttendance:', error);
-    res.status(500).json({ message: 'Server error' });
+    if (error.code === 11000) {
+      res.status(400).json({ message: 'Attendance already marked' });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 };
 
 const getAttendanceByLecture = async (req, res) => {
   try {
     const { lectureId } = req.params;
-    const attendance = await Attendance.find({ lectureId });
+    const attendance = await Attendance.find({ lectureId }).sort({ timestamp: 1 });
     const attendanceResponse = attendance.map(att => ({
-      id: att.id,
-      lectureId: att.lectureId,
-      studentId: att.studentId,
+      id: att._id.toString(),
+      lectureId: att.lectureId.toString(),
+      studentId: att.studentId.toString(),
       studentName: att.studentName,
       timestamp: att.timestamp
     }));
@@ -69,38 +73,23 @@ const getAttendanceByLecture = async (req, res) => {
 const getAttendanceByStudent = async (req, res) => {
   try {
     const studentId = req.session.userId;
-    const attendance = await Attendance.find({ studentId });
-
-    // Get unique lecture IDs
-    const lectureIds = [...new Set(attendance.map(a => a.lectureId))];
-    const lectures = await Promise.all(lectureIds.map(async (id) => {
-      const admin = require('firebase-admin');
-      const db = admin.firestore();
-      const doc = await db.collection('lectures').doc(id).get();
-      return doc.exists ? { id: doc.id, ...doc.data() } : null;
+    const attendance = await Attendance.find({ studentId })
+      .populate('lectureId', 'title subject date startTime room')
+      .sort({ timestamp: -1 });
+    const attendanceResponse = attendance.map(att => ({
+      id: att._id.toString(),
+      lectureId: {
+        id: att.lectureId._id.toString(),
+        title: att.lectureId.title,
+        subject: att.lectureId.subject,
+        date: att.lectureId.date,
+        startTime: att.lectureId.startTime,
+        room: att.lectureId.room
+      },
+      studentId: att.studentId.toString(),
+      studentName: att.studentName,
+      timestamp: att.timestamp
     }));
-    const lectureMap = {};
-    lectures.forEach(lecture => {
-      if (lecture) lectureMap[lecture.id] = lecture;
-    });
-
-    const attendanceResponse = attendance.map(att => {
-      const lecture = lectureMap[att.lectureId];
-      return {
-        id: att.id,
-        lectureId: {
-          id: att.lectureId,
-          title: lecture ? lecture.title : 'Unknown',
-          subject: lecture ? lecture.subject : 'Unknown',
-          date: lecture ? lecture.date : 'Unknown',
-          startTime: lecture ? lecture.startTime : 'Unknown',
-          room: lecture ? lecture.room : 'Unknown'
-        },
-        studentId: att.studentId,
-        studentName: att.studentName,
-        timestamp: att.timestamp
-      };
-    });
     res.status(200).json(attendanceResponse);
   } catch (error) {
     console.error('Error in getAttendanceByStudent:', error);
@@ -122,31 +111,21 @@ const bulkMarkAttendance = async (req, res) => {
       studentName: student.name
     }));
 
-    // Insert records one by one, skip duplicates
-    let insertedCount = 0;
-    for (const record of attendanceRecords) {
-      try {
-        const existing = await Attendance.findOne({
-          lectureId: record.lectureId,
-          studentId: record.studentId
-        });
-        if (!existing) {
-          const attendance = Attendance.create(record);
-          await attendance.save();
-          insertedCount++;
-        }
-      } catch (error) {
-        // Skip duplicates
-        continue;
-      }
-    }
+    // Insert many, ignore duplicates
+    const result = await Attendance.insertMany(attendanceRecords, { ordered: false });
 
-    res.status(201).json({ message: 'Bulk attendance marked successfully', insertedCount });
+    res.status(201).json({ message: 'Bulk attendance marked successfully', insertedCount: result.length });
   } catch (error) {
     console.error('Error in bulkMarkAttendance:', error);
-    res.status(500).json({ message: 'Server error' });
+    // If some duplicates, still return success with count
+    if (error.code === 11000) {
+      res.status(201).json({ message: 'Bulk attendance marked (some duplicates ignored)' });
+    } else {
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 };
+
 
 module.exports = {
   markAttendance,

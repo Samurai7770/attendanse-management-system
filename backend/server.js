@@ -1,13 +1,14 @@
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const cors = require('cors');
-const initializeFirebase = require('./config/database');
+const connectDB = require('./config/database');
 require('dotenv').config();
 
 const app = express();
 
-// Initialize Firebase
-initializeFirebase();
+// Connect to MongoDB
+connectDB();
 
 // Middleware
 app.use(cors({
@@ -41,6 +42,10 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/qr-attendance',
+    collectionName: 'sessions'
+  }),
   cookie: {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
@@ -64,5 +69,5 @@ app.get('/api/health', (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });

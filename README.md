@@ -6,7 +6,7 @@ A modern, mobile-friendly attendance tracking system using QR codes. Teachers ca
 
 - **QR Code Generation**: Teachers can instantly generate QR codes for each lecture
 - **Mobile QR Scanning**: Students use their mobile devices to scan QR codes and mark attendance
-- **Session-Based Authentication**: Secure login with session cookies stored in MongoDB
+- **Session-Based Authentication**: Secure login with session cookies stored in Firebase
 - **Real-time Attendance Tracking**: See attendance records updated in real-time
 - **Activity History**: Students can view their attendance history and absence alerts
 - **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
@@ -17,9 +17,9 @@ A modern, mobile-friendly attendance tracking system using QR codes. Teachers ca
 ```
 qr-attendance-system/
 ├── backend/                # Express.js server
-│   ├── config/           # Database configuration
+│   ├── config/           # Firebase configuration
 │   ├── controllers/       # Route controllers
-│   ├── models/           # MongoDB schemas
+│   ├── models/           # Firestore models
 │   ├── routes/           # API routes
 │   ├── middleware/        # Auth middleware
 │   ├── server.js         # Main server file
@@ -40,7 +40,7 @@ qr-attendance-system/
 
 ### Prerequisites
 - Node.js (v16+)
-- MongoDB (local or Atlas)
+- Firebase Project (with Firestore enabled)
 - npm or yarn
 
 ### Installation
@@ -56,7 +56,8 @@ cd qr-attendance-system
 cd backend
 npm install
 cp .env.example .env
-# Edit .env with your MongoDB URI and SESSION_SECRET
+# Edit .env with your Firebase project ID and SESSION_SECRET
+# For production, you'll need to set FIREBASE_SERVICE_ACCOUNT_KEY
 npm run dev
 ```
 
@@ -92,7 +93,7 @@ The frontend will run on `http://localhost:5173`
 
 ## 🔐 Security Features
 
-- **Session-Based Authentication**: Secure sessions stored in MongoDB
+- **Session-Based Authentication**: Secure sessions stored in Firebase
 - **HttpOnly Cookies**: Prevents XSS attacks
 - **CORS Protection**: Configurable for allowed origins
 - **Role-Based Access Control**: Different permissions for teachers and students

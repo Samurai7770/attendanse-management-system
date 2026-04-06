@@ -11,19 +11,19 @@ const findOrCreateUser = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      user = new User({ name, email, role });
+      user = User.create({ name, email, role });
       await user.save();
     }
 
     // Set session
-    req.session.userId = user._id.toString();
+    req.session.userId = user.id;
     req.session.role = user.role;
     req.session.name = user.name;
     req.session.email = user.email;
 
     // Return user with id as string
     const userResponse = {
-      id: user._id.toString(),
+      id: user.id,
       name: user.name,
       email: user.email,
       role: user.role

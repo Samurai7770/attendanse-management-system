@@ -10,14 +10,14 @@
 
 ---
 
-## PART 1: Database Setup (MongoDB Atlas)
+## PART 1: Database Setup (Firebase)
 
-1. Go to [mongodb.com/cloud/atlas](https://mongodb.com/cloud/atlas)
-2. Sign up for free account
-3. Create a cluster (free tier)
-4. Add your IP address to whitelist
-5. Create database user with password
-6. Copy connection string: `mongodb+srv://user:password@cluster.mongodb.net/qr-attendance?retryWrites=true`
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new Firebase project
+3. Enable Firestore Database
+4. Go to Project Settings > Service Accounts
+5. Generate a new private key (JSON file)
+6. Copy the JSON content for the service account key
 
 ---
 
@@ -42,7 +42,9 @@
 
 4. **Set Environment Variables in Render:**
    ```
-   MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/qr-attendance
+   FIREBASE_SERVICE_ACCOUNT_KEY={"type":"service_account","project_id":"your-project-id",...}
+   FIREBASE_PROJECT_ID=your-firebase-project-id
+   FIREBASE_DATABASE_URL=https://your-firebase-project-id.firebaseio.com
    SESSION_SECRET=your-super-secret-key-change-this
    PORT=5000
    NODE_ENV=production
